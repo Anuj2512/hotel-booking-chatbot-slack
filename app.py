@@ -8,6 +8,7 @@ import jinja2
 from flask import render_template, request, make_response
 from slackeventsapi import SlackEventAdapter
 from bot import Bot
+from python_mysql_connect import iter_row, getRoomType, getRoomInfo, getAvailableRoomInfo, getRoomAvailabilityByType, getRoomAvailabilityByDate, bookRoom
 
 
 
@@ -78,14 +79,24 @@ def action_handler(action_value, original_msg):
         intent = responseObj["result"]["metadata"]["intentName"]
         room_type = responseObj["result"]["parameters"]["RoomType"]
         date_period = responseObj["result"]["parameters"]["date-period"]
-        bActionComplete = responseObj["result"]["actionIncomplete"] == False
+        email = getEmailId(original_msg)
 
+        bActionComplete = responseObj["result"]["actionIncomplete"] == False
+        
         print(intent, room_type, date_period, bActionComplete)
-        booking_response = book_room()
-        #if True:
-              
-        return make_response(mybot.show_booking_confirmation(room_type, date_period), 200, {'Content-Type':
-                                                     'application/json'})
+        
+        arr_available_rooms = getRoomAvailabilityByType(room_type)
+
+        if len(arr_available_rooms) == 0:
+            return make_response(mybot.show_room_not_available(room_type, date_period), 200, {'Content-Type':
+                                                        'application/json'})
+        else:
+            dates = date_period.split("/")   
+            bookRoom(0, dates[0], dates[1], "", "", "", "", "", "", email, "", "", 0,0,"","", arr_available_rooms[0])
+            
+            return make_response(mybot.show_booking_confirmation(room_type, date_period), 200, {'Content-Type':
+                                                        'application/json'})
+
     
     if action_value == "email_confirmation":
         print(original_msg)
@@ -116,9 +127,10 @@ def before_first_request():
     if not verification:
         print("Can't find Verification Token, did you set this env variable?")
 
-
-def book_room():
-    return True
+def getEmailId(s):
+    _,_,rest = s.partition("<mailto:")
+    result,_,_ = rest.partition("|")
+    return result
 
 if __name__ == '__main__':
     events_adapter.start(debug=True)

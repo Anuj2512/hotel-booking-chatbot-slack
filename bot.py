@@ -5,6 +5,7 @@ In this file, we'll create a python Bot Class.
 import os
 import json
 from slackclient import SlackClient
+from python_mysql_connect import iter_row, getRoomType, getRoomInfo, getAvailableRoomInfo, getRoomAvailabilityByType, getRoomAvailabilityByDate, bookRoom
 
 import os.path
 import sys
@@ -100,25 +101,32 @@ class Bot(object):
             room_type = responseObj["result"]["parameters"]["RoomType"]
             date_period = responseObj["result"]["parameters"]["date-period"]
             bActionComplete = responseObj["result"]["actionIncomplete"] == False
+            email = responseObj["result"]["parameters"]["email"]
+            dates = date_period.split("/")
 
             if bActionComplete:
-                response_message = "Sure. we have some " + room_type + " rooms available for " + date_period
-                message_attachments = [
-                        {
-                            "text": "Are you sure you want to book this room ?",
-                            "callback_id": "booking",
-                            "color": "good",
-                            "attachment_type": "default",
-                            "actions": [
-                                {
-                                    "name": "confirm_booking",
-                                    "text": ":hotel: Confirm Booking",
-                                    "type": "button",
-                                    "value": "confirm_booking"
-                                }
-                            ]
-                        }
-                    ]
+                
+                arr_available_rooms = getRoomAvailabilityByType(room_type)
+                if len(arr_available_rooms) == 0:
+                    response_message = "Sorry. We don't have " + room_type + " rooms available from " + dates[0] + " to " + dates[1]
+                else:
+                    response_message = "Thank you " + email + " . we have some " + room_type + " rooms available from " + dates[0] + " to " + dates[1]
+                    message_attachments = [
+                            {
+                                "text": "Are you sure you want to book this room ?",
+                                "callback_id": "booking",
+                                "color": "warning",
+                                "attachment_type": "default",
+                                "actions": [
+                                    {
+                                        "name": "confirm_booking",
+                                        "text": ":hotel: Confirm Booking",
+                                        "type": "button",
+                                        "value": "confirm_booking"
+                                    }
+                                ]
+                            }
+                        ]
 
             self.send_response(response_message, message_attachments, channel)
 
@@ -255,6 +263,7 @@ class Bot(object):
         return json.dumps(message)
 
     def show_booking_confirmation(self, room_type, date_period):
+        dates = date_period.split("/")
         message = {
             "as_user": False,
             "replace_original": False,
@@ -262,8 +271,9 @@ class Bot(object):
             "text": "*Booking Confirmation:*:\n Here's details about your booking at Hotel California.",
             "attachments": [{
                 "mrkdwn_in": ["text", "pretext"],
+                "color": "good",
                 "text": "Room Type: " + room_type + "\n"
-                "Date: " + date_period + "\n",
+                "Date: " + dates[0] + " to " + dates[1]  + "\n",
                 "actions": [
                     {
                         "name": "email_confirmation",
@@ -274,4 +284,13 @@ class Bot(object):
                 ]
                 
             }]}
+        return json.dumps(message)
+
+    def show_room_not_available(self, room_type, date_period):
+        message = {
+        "as_user": False,
+        "replace_original": False,
+        "response_type": "ephemeral",
+        "text": "Sorry. Room you are looking is no more available."
+        }
         return json.dumps(message)
