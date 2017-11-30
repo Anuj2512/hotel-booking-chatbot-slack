@@ -2,6 +2,7 @@
 """
 In this file, we'll create a python Bot Class.
 """
+import shortuuid
 import os
 import json
 from slackclient import SlackClient
@@ -146,134 +147,25 @@ class Bot(object):
             self.client.api_call("chat.postMessage",
                             channel=channel,
                             text=response_message,
-                            attachments=json.dumps(message_attachments))
-            
+                            attachments=json.dumps(message_attachments))            
 
-    def say_hello(self, message):
-        """
-        A method to ask workshop attendees to build this bot. When a user
-        clicks the button for their operating system, the bot should display
-        the set-up instructions for that operating system.
-        """
-        print("say hello")
-        print(message)
-        channel = message["channel"]
-        hello_message = "I want to live! Please build me."
-        # Add message attachments here!
-        message_attachments = [
-            {
-                "pretext": "I'll tell you how to set up your system. :robot_face:",
-                "text": "What operating system are you using?",
-                "callback_id": "os",
-                "color": "#3AA3E3",
-                "attachment_type": "default",
-                "actions": [
-                    {
-                        "name": "mac",
-                        "text": ":apple: Mac",
-                        "type": "button",
-                        "value": "mac"
-                    },
-                    {
-                        "name": "windows",
-                        "text": ":fax: Windows",
-                        "type": "button",
-                        "value": "win"
-                    }
-                ]
-            }
-        ]
-        self.client.api_call("chat.postMessage",
-                             channel=channel,
-                             text=hello_message,
-                             attachments=json.dumps(message_attachments))
-
-    def show_win(self):
-        """
-        Here we'll build a method to respond to a user's action taken from a
-        message button. It should return a message with system setup
-        instructions for building this bot on a Windows operating system.
-        """
-        message = {
-            "as_user": False,
-            "replace_original": False,
-            "response_type": "ephemeral",
-            "text": ":fax: *Windows OS*:\n Here's some helpful tips for "
-            "setting up the requirements you'll need for this workshop:",
-            "attachments": [{
-                "mrkdwn_in": ["text", "pretext"],
-                "text": "*Python 2.7 and Pip*:\n_Check to see if you have "
-                "Python on your system:_\n```python --version```\n_Download "
-                "link:_\nhttps://www.python.org/ftp/python/2.7.12/python-2.7.1"
-                "2.msi\n_Make sure to tick  `Add Python.exe to PATH` when "
-                "installing Python for Windows._\n_If that doesn't add it to "
-                "the path after installation, run this command:_\n```c:\pyth"
-                "on27\\tools\scripts\win_add2path.py```\n_After downloading "
-                "Python, you must upgrade your version of Pip:_\n```python "
-                "-m pip install -U pip```\n*Virtualenv*:\n_Check to see if "
-                "you have virtualenv on your system and install it if you "
-                "don't have it:_\n```virtualenv --version\npip install "
-                "virtualenv```\n*Ngrok:*\n_Check to see if you have ngrok on "
-                "your system:_\n```ngrok --version```\n_Download "
-                "Link:_\nhttps://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable"
-                "-darwin-amd64.zip\nTo unzip on Windows, just double click "
-                "ngrok.zip",
-                "footer": "Slack API: Build this Bot Workshop",
-                "footer_icon": "https://platform.slack-edge.com/img/default"
-                "_application_icon.png"
-            }]}
-        return json.dumps(message)
-        pass
-
-    def show_mac(self):
-        """
-        A method to respond to a user's action taken from a message button.
-        Returns a message with system setup instructions for building this bot
-        on a Mac operating system.
-        """
-        message = {
-            "as_user": False,
-            "replace_original": False,
-            "response_type": "ephemeral",
-            "text": ":apple: *Mac OS*:\n Here's some helpful tips for "
-            "setting up the requirements you'll need for this workshop:",
-            "attachments": [{
-                "mrkdwn_in": ["text", "pretext"],
-                "text": "*Python 2.7 and Pip*:\n_Check to see if you have "
-                "Python on your system:_\n```which python && python "
-                "--version```\n_If you have homebrew, you can use it to "
-                "install python and pip:_\n```brew install python && pip```"
-                "\n_If not, you can download python here:_Download link:_\n"
-                "https://www.python.org/ftp/python/2.7.12/python-2.7.12-"
-                "macosx10.6.pkg\n_After downloading Python, you must upgrade "
-                "your version of Pip:_\n```pip install -U pip```\n"
-                "*Virtualenv*:\n_Check to see if you have virtualenv on your "
-                "system and install it if you don't have it:_\n```which "
-                "virtualenv\npip install virtualenv```\n*Ngrok:*\n_Check "
-                "to see if you have ngrok on your system:_\n```which ngrok"
-                "```\n_Download Link:_\nhttps://bin.equinox.io/c/4VmDzA7iaHb"
-                "/ngrok-stable-darwin-amd64.zip\n```unzip /path/to/ngrok.zip"
-                "\ncd /usr/local/bin\nln -s /path/to/ngrok ngrok```",
-                "footer": "Slack API: Build this Bot Workshop",
-                "footer_icon": "https://platform.slack-edge.com/img/default"
-                "_application_icon.png"
-                }]
-            }
-
-        return json.dumps(message)
-
-    def show_booking_confirmation(self, room_type, date_period):
+    def show_booking_confirmation(self, room_type, date_period, email):
         dates = date_period.split("/")
+        confimationId = shortuuid.ShortUUID().random(length=6).upper()
         message = {
             "as_user": False,
-            "replace_original": False,
+            "replace_original": True,
             "response_type": "ephemeral",
             "text": "*Booking Confirmation:*:\n Here's details about your booking at Hotel California.",
             "attachments": [{
+                "attachment_type": "default",
                 "mrkdwn_in": ["text", "pretext"],
                 "color": "good",
-                "text": "Room Type: " + room_type + "\n"
-                "Date: " + dates[0] + " to " + dates[1]  + "\n",
+                "text": "Booking Confirmation ID: " + confimationId + "\n"
+                        "Email: " + email + "\n"
+                        "Room Type: " + room_type + "\n"
+                        "Date: " + dates[0] + " to " + dates[1]  + "\n",
+                "callback_id": "booking",
                 "actions": [
                     {
                         "name": "email_confirmation",
@@ -293,4 +185,15 @@ class Bot(object):
         "response_type": "ephemeral",
         "text": "Sorry. Room you are looking is no more available."
         }
+        return json.dumps(message)
+
+
+    def show_email_sent(self, room_type, date_period, email):
+        
+        message = {
+            "as_user": False,
+            "replace_original": False,
+            "response_type": "ephemeral",
+            "text": "I have sent booking confirmation email to " + email + ". Thanks for choosing Hotel California.",
+            }
         return json.dumps(message)

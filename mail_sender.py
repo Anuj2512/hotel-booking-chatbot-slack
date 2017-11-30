@@ -2,9 +2,9 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
  
-def sendingemail(toaddr, emailsub, emailbody):
+def send_mail(toaddr, emailsub, emailbody):
     
-    fromaddr = "sannisth.130410116107@gmail.com"
+    fromaddr = "rocket2512@gmail.com"
     msg = MIMEMultipart()
     msg['From'] = "Hotel California"
     msg['To'] = toaddr
@@ -15,7 +15,7 @@ def sendingemail(toaddr, emailsub, emailbody):
     #server connection and login 
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login(fromaddr, "kaladeep")
+    server.login(fromaddr, "123anuj123")
 
     # concatanate whole body into a string
     text = msg.as_string() 
@@ -25,7 +25,7 @@ def sendingemail(toaddr, emailsub, emailbody):
     server.quit()
 
 if __name__ == '__main__':
-    sendingemail ("soni.sannisth@gmail.com", "Regarding room booking/cancellation", "welcome to fuck all hotel!")
+    send_mail ("soni.sannisth@gmail.com", "Regarding room booking/cancellation", "welcome to fuck all hotel!")
 
 
 #our emailid and password = sannisth.130410116107@gmail.com, kaladeep
