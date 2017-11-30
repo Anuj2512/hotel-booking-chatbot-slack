@@ -25,9 +25,7 @@ def sendingemail(toaddress, mailsub, emailbody):
     server.quit()
 
 if __name__ == '__main__':
-    sendingemail (toaddress = "soni.sannisth@gmail.com", #receiver's emailid
-                mailsub = "Cali hotel", 
-                emailbody = "welcome to fuck all hotel!")
+    sendingemail ("soni.sannisth@gmail.com", "Cali hotel", "welcome to fuck all hotel!")
 
 
 #our emailid and password = sannisth.130410116107@gmail.com, kaladeep
