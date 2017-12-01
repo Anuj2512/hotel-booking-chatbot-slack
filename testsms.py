@@ -18,7 +18,7 @@ def sendingsms (textmsg, receiver):
 if __name__ == "__main__":
     sendingsms("Hello from Python!", "+16572305796")
 
-#twilio phone number : +13254844034
-#Sannisth phone number : +16572305796
+#twilio phone number : +13254844034 => will receive sms from this number 
+#Sannisth phone number : +16572305796 => only 1 phonenumber allowed in twilio trail, so will be able to send sms to this number only
 #Account Sid : ACc3a1cc658d00cbca3e611eeea8cc9bbb
 #Auth Token : 80f8e06e0a5832d7e81b81773de7a119
