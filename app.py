@@ -10,6 +10,7 @@ from slackeventsapi import SlackEventAdapter
 from bot import Bot
 from python_mysql_connect import iter_row, getRoomType, getRoomInfo, getAvailableRoomInfo, getRoomAvailabilityByType, getRoomAvailabilityByDate, bookRoom
 from mail_sender import send_mail
+from sms_sender import send_sms
 from threading import Thread
 
 
@@ -100,7 +101,8 @@ def action_handler(action_value, original_msg_obj):
                                                         'application/json'})
 
     
-    if action_value == "email_confirmation":
+    if action_value == "email_confirmation" or action_value == "sms_confirmation":
+        
         print("$$$$$$$$$$$$$$$$$$$ original_msg $$$$$$$$$$$$$$$$$$$$$$")
         attachment_msg = original_msg_obj["attachments"][0]["text"]
         responseObj = mybot.getAPIAIResponseObject(attachment_msg, "bot_user")
@@ -110,25 +112,31 @@ def action_handler(action_value, original_msg_obj):
         date_period = responseObj["result"]["parameters"]["date-period"]
         email = getEmailId(attachment_msg)
         dates = date_period.split("/") 
+        booking_confirmation_id = attachment_msg.split('\n', 1)[0]
 
         print(intent, room_type, date_period, email)
-        
+
         email_subject = "Booking Confirmation"
-        email_body = "Dear " + email + ", \n\nHere is your booking details at Hotel California. \n\n"  \
-                     "Room Type: " + room_type + "\n"  \
-                     "CheckIn Date: " + dates[0] + "\n"  \
-                     "CheckOut Date: " + dates[1] + "\n\n" \
-                     "Thank you for choosing Hotel California."
+        msg_body = "Dear " + email + ", \n\nHere is your booking details at Hotel California. \n\n"  + \
+                    booking_confirmation_id + "\n" \
+                    "Room Type: " + room_type + "\n"  \
+                    "CheckIn Date: " + dates[0] + "\n"  \
+                    "CheckOut Date: " + dates[1] + "\n\n" \
+                    "Thank you for choosing Hotel California."
 
-        
-        thr = Thread(target=send_mail,args=[email,email_subject, email_body])
-        thr.start()
-        
-        #send_mail(email, email_subject, email_body)
+        if action_value == "email_confirmation":
 
-        return make_response(mybot.show_email_sent(room_type, date_period, email), 200, {'Content-Type':
+            thr = Thread(target=send_mail,args=[email,email_subject, msg_body])
+            thr.start()
+            return make_response(mybot.show_email_sent(room_type, date_period, email), 200, {'Content-Type':
                                                         'application/json'})
 
+        if action_value == "sms_confirmation":
+            
+            thr = Thread(target=send_sms,args=[msg_body, "+16572305796"])
+            thr.start()
+            return make_response(mybot.show_sms_sent(room_type, date_period, "+16572305796"), 200, {'Content-Type':
+                                                        'application/json'})
 
     return "No action handler found for %s type actions" % action_value
     pass

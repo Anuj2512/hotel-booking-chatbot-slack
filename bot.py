@@ -169,9 +169,15 @@ class Bot(object):
                 "actions": [
                     {
                         "name": "email_confirmation",
-                        "text": ":ticket: Send Email Confirmation",
+                        "text": ":email: Send Email Confirmation",
                         "type": "button",
                         "value": "email_confirmation"
+                    },
+                    {
+                        "name": "sms_confirmation",
+                        "text": ":phone: Send SMS Confirmation",
+                        "type": "button",
+                        "value": "sms_confirmation"
                     }
                 ]
                 
@@ -195,5 +201,15 @@ class Bot(object):
             "replace_original": False,
             "response_type": "ephemeral",
             "text": "I have sent booking confirmation email to " + email + ". Thanks for choosing Hotel California.",
+            }
+        return json.dumps(message)
+
+    def show_sms_sent(self, room_type, date_period, mobile):
+        
+        message = {
+            "as_user": False,
+            "replace_original": False,
+            "response_type": "ephemeral",
+            "text": "I have sent booking confirmation to " + mobile + ". Thanks for choosing Hotel California.",
             }
         return json.dumps(message)
