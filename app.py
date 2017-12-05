@@ -10,6 +10,7 @@ from slackeventsapi import SlackEventAdapter
 from bot import Bot
 from python_mysql_connect import iter_row, getRoomType, getRoomInfo, getAvailableRoomInfo, getRoomAvailabilityByType, getRoomAvailabilityByDate, bookRoom
 from mail_sender import send_mail
+from threading import Thread
 
 
 mybot = Bot()
@@ -69,17 +70,13 @@ def action_handler(action_value, original_msg_obj):
     
     original_msg = original_msg_obj["text"]
     print("########### Action Handler ###########", action_value)
-
-    if action_value == "mac":
-        return make_response(mybot.show_mac(), 200, {'Content-Type':
-                                                     'application/json'})
-    if action_value == "win":
-        return make_response(mybot.show_win(), 200, {'Content-Type':
-                                                     'application/json'})
-
+    
     if action_value == "confirm_booking":
         
         responseObj = mybot.getAPIAIResponseObject(original_msg, "bot_user")
+
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        print(responseObj["result"]["parameters"])
 
         intent = responseObj["result"]["metadata"]["intentName"]
         room_type = responseObj["result"]["parameters"]["RoomType"]
@@ -123,7 +120,11 @@ def action_handler(action_value, original_msg_obj):
                      "CheckOut Date: " + dates[1] + "\n\n" \
                      "Thank you for choosing Hotel California."
 
-        send_mail(email, email_subject, email_body)
+        
+        thr = Thread(target=send_mail,args=[email,email_subject, email_body])
+        thr.start()
+        
+        #send_mail(email, email_subject, email_body)
 
         return make_response(mybot.show_email_sent(room_type, date_period, email), 200, {'Content-Type':
                                                         'application/json'})

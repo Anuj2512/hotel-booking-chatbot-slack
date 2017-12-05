@@ -1,9 +1,11 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
- 
+import asyncio
+
 def send_mail(toaddr, emailsub, emailbody):
     
+    print("SENDING MAIL")
     fromaddr = "rocket2512@gmail.com"
     msg = MIMEMultipart()
     msg['From'] = "Hotel California"
@@ -25,7 +27,7 @@ def send_mail(toaddr, emailsub, emailbody):
     server.quit()
 
 if __name__ == '__main__':
-    send_mail ("soni.sannisth@gmail.com", "Regarding room booking/cancellation", "welcome to fuck all hotel!")
+    send_mail ("soni.sannisth@gmail.com", "Regarding room booking/cancellation", "welcome to hotel california!")
 
 
 #our emailid and password = sannisth.130410116107@gmail.com, kaladeep
