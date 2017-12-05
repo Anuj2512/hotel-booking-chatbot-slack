@@ -6,7 +6,7 @@ import shortuuid
 import os
 import json
 from slackclient import SlackClient
-from python_mysql_connect import iter_row, getRoomType, getRoomInfo, getAvailableRoomInfo, getRoomAvailabilityByType, getRoomAvailabilityByDate, bookRoom
+from python_mysql_connect import iter_row, getRoomType, getRoomInfo, getAvailableRoomInfo, getRoomAvailabilityByType, getRoomAvailabilityByDate, bookRoom, getBookingByEmail
 
 import os.path
 import sys
@@ -98,36 +98,67 @@ class Bot(object):
             self.send_response(response_message, message_attachments, channel)
 
         else:
-            intent = responseObj["result"]["metadata"]["intentName"]
-            room_type = responseObj["result"]["parameters"]["RoomType"]
-            date_period = responseObj["result"]["parameters"]["date-period"]
+            
+            intent = self.get_value_if_key_exists(responseObj["result"]["metadata"], "intentName")
+            room_type = self.get_value_if_key_exists(responseObj["result"]["parameters"],"RoomType")
+            date_period = self.get_value_if_key_exists(responseObj["result"]["parameters"], "date-period")
             bActionComplete = responseObj["result"]["actionIncomplete"] == False
-            email = responseObj["result"]["parameters"]["email"]
+            email = self.get_value_if_key_exists(responseObj["result"]["parameters"],"email")
             dates = date_period.split("/")
 
             if bActionComplete:
                 
-                arr_available_rooms = getRoomAvailabilityByType(room_type)
-                if len(arr_available_rooms) == 0:
-                    response_message = "Sorry. We don't have " + room_type + " rooms available from " + dates[0] + " to " + dates[1]
-                else:
-                    response_message = "Thank you " + email + " . we have some " + room_type + " rooms available from " + dates[0] + " to " + dates[1]
-                    message_attachments = [
-                            {
-                                "text": "Are you sure you want to book this room ?",
-                                "callback_id": "booking",
-                                "color": "warning",
-                                "attachment_type": "default",
-                                "actions": [
-                                    {
-                                        "name": "confirm_booking",
-                                        "text": ":hotel: Confirm Booking",
-                                        "type": "button",
-                                        "value": "confirm_booking"
-                                    }
-                                ]
-                            }
-                        ]
+                if intent == "Booking":
+                    arr_available_rooms = getRoomAvailabilityByType(room_type)
+                    if len(arr_available_rooms) == 0:
+                        response_message = "Sorry. We don't have " + room_type + " rooms available from " + dates[0] + " to " + dates[1]
+                    else:
+                        response_message = "Thank you " + email + " . we have some " + room_type + " rooms available from " + dates[0] + " to " + dates[1]
+                        message_attachments = [
+                                {
+                                    "text": "Are you sure you want to book this room ?",
+                                    "callback_id": "booking",
+                                    "color": "warning",
+                                    "attachment_type": "default",
+                                    "actions": [
+                                        {
+                                            "name": "confirm_booking",
+                                            "text": ":hotel: Confirm Booking",
+                                            "type": "button",
+                                            "value": "confirm_booking"
+                                        }
+                                    ]
+                                }
+                            ]
+                elif intent == "cancellation":
+                    booked_room = getBookingByEmail(email)
+                    print("BOOKED ROOM Info", booked_room)
+
+                    if booked_room == None:
+                        response_message = "Sorry. We couldn't find any booking with email id: " + email
+                    else:
+                        
+                        attachment_text = "Email: " + email + "\n" \
+                                            "Room Type: " + booked_room[1] + "\n" \
+                                            "Date: " + booked_room[2].strftime('%Y-%m-%d') + " to " + booked_room[3].strftime('%Y-%m-%d')  + "\n";
+
+                        response_message = "Here is your booking details. Are you sure you want to cancel your booking ?"
+                        message_attachments = [
+                                {
+                                    "text": attachment_text,
+                                    "callback_id": "booking",
+                                    "color": "danger",
+                                    "attachment_type": "default",
+                                    "actions": [
+                                        {
+                                            "name": "cancel_booking",
+                                            "text": "Cancel Booking",
+                                            "type": "button",
+                                            "value": "cancel_booking"
+                                        }
+                                    ]
+                                }
+                            ]
 
             self.send_response(response_message, message_attachments, channel)
 
@@ -213,3 +244,19 @@ class Bot(object):
             "text": "I have sent booking confirmation to " + mobile + ". Thanks for choosing Hotel California.",
             }
         return json.dumps(message)
+
+    def show_booking_cancellation_info(self, response_msg):
+        
+        message = {
+            "as_user": False,
+            "replace_original": False,
+            "response_type": "ephemeral",
+            "text": response_msg,
+            }
+        return json.dumps(message)
+
+
+    def get_value_if_key_exists(self, dic, key):
+        if key in dic:
+            return dic[key]
+        return ""

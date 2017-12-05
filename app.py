@@ -8,7 +8,7 @@ import jinja2
 from flask import render_template, request, make_response
 from slackeventsapi import SlackEventAdapter
 from bot import Bot
-from python_mysql_connect import iter_row, getRoomType, getRoomInfo, getAvailableRoomInfo, getRoomAvailabilityByType, getRoomAvailabilityByDate, bookRoom
+from python_mysql_connect import iter_row, getRoomType, getRoomInfo, getAvailableRoomInfo, getRoomAvailabilityByType, getRoomAvailabilityByDate, bookRoom, getBookingByEmail, cancelBookingByRoomId
 from mail_sender import send_mail
 from sms_sender import send_sms
 from threading import Thread
@@ -137,6 +137,22 @@ def action_handler(action_value, original_msg_obj):
             thr.start()
             return make_response(mybot.show_sms_sent(room_type, date_period, "+16572305796"), 200, {'Content-Type':
                                                         'application/json'})
+
+    if action_value == "cancel_booking":
+        attachment_msg = original_msg_obj["attachments"][0]["text"]
+        email = getEmailId(attachment_msg)
+
+        booked_room = getBookingByEmail(email)
+        if booked_room == None:
+            response_message = "Sorry. We couldn't find any booking with email id: " + email
+        else:
+            cancelBookingByRoomId(booked_room[0])
+            response_message = "We have cancelled your booking at Hotel California."
+        
+        return make_response(mybot.show_booking_cancellation_info(response_message), 200, {'Content-Type':
+                                                    'application/json'})
+
+        
 
     return "No action handler found for %s type actions" % action_value
     pass

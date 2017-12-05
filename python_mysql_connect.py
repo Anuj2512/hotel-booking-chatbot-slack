@@ -147,17 +147,19 @@ def getRoomAvailabilityByDate(date):
         conn.close()
 
 def getBookingByEmail(email):
+    room_info = None
     try:
         dbconfig = read_db_config()
         conn = MySQLConnection(**dbconfig)
         cursor = conn.cursor()
         
-        queryString = "SELECT bot_table.roomNo,bot_table.roomType, bot_table.checkInDate, bot_table.checkOutDate FROM botdb.bot_table WHERE bot_table.email = '" + email + "' "
+        queryString = "SELECT bot_table.roomNo,bot_table.roomType, bot_table.checkInDate, bot_table.checkOutDate FROM botdb.bot_table WHERE bot_table.email = '" + email + "' LIMIT 1"
         query = (queryString)
         cursor.execute(query)
  
         for row in cursor:
             print(row)
+            room_info = row
 
     except Error as e:
         print(e)
@@ -165,6 +167,8 @@ def getBookingByEmail(email):
     finally:
         cursor.close()
         conn.close()
+    
+    return room_info
 
 def bookRoom(available, checkInDate,checkOutDate,firstName,lastName,address,
              city,state,postalCode,email,phone,cardNo,cardExpiryYear,
@@ -214,8 +218,8 @@ def bookRoom(available, checkInDate,checkOutDate,firstName,lastName,address,
         cursor.close()
         conn.close()
  
-#def cancelBooking(email):
-    
+def cancelBookingByRoomId(roomNo):
+    bookRoom(1,None,None,'','','','','','','','','',00,00,'','',roomNo)
 
 if __name__ == '__main__':
     #check if the connection works
@@ -229,12 +233,14 @@ if __name__ == '__main__':
     # getAvailableRoomInfo()
     # #get availability of rooms by type of the room
     print(getRoomAvailabilityByType('single'))
-    getBookingByEmail("anuj251293@gmail.com")
+    getBookingByEmail("anuj251293@gmail1.com")
+    cancelBookingByRoomId(8) 
+    bookRoom(1,None,None,'','','','','','','','','',00,00,'','',8)
     # #get availability of rooms by date (format yyyy-mm-dd)
     #getRoomAvailabilityByDate('2017-12-06')
     # #room booking
-    bookRoom(0, '2017-12-01','2017-12-31','Julia','Roberts','9, Marine Parkway',
-             'Redwood City','CA','94093','julia.roberts@gmail.com',
-             '6549871524','9854759832158746',22,
-             11,'soon','',11)
+    #bookRoom(0, '2017-12-01','2017-12-31','Julia','Roberts','9, Marine Parkway',
+    #         'Redwood City','CA','94093','julia.roberts@gmail.com',
+    #         '6549871524','9854759832158746',22,
+    #         11,'soon','',11)
     
