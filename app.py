@@ -23,7 +23,6 @@ template_loader = jinja2.ChoiceLoader([
                   ])
 events_adapter.server.jinja_loader = template_loader
 
-
 @events_adapter.server.route("/install", methods=["GET"])
 def before_install():
     """
@@ -53,54 +52,75 @@ def respond():
     print("############################################")
     print(request)
 
-    # get the value of the button press
-    action_value = slack_payload["actions"][0].get("value")
-    print(action_value)
-    print(slack_payload)
+    if slack_payload["type"] == "interactive_message":
+        # get the value of the button press
+        action_value = slack_payload["actions"][0].get("value")
+        print(action_value)
+        print(slack_payload)
 
-    original_msg_obj = slack_payload["original_message"]
-    print(original_msg_obj)
+        original_msg_obj = slack_payload["original_message"]
+        print(original_msg_obj)
 
-    # handle the action
-    return action_handler(action_value, original_msg_obj)
+        trigger_id = slack_payload["trigger_id"]
 
+        # handle the action
+        return action_handler(action_value, original_msg_obj, trigger_id)
+
+    elif slack_payload["type"] == "dialog_submission":
+        print(slack_payload)
+        submission = slack_payload["submission"]
+        card_number = submission["card_number"]
+        card_holder_name = submission["card_holder_name"]
+        expiry_year = submission["expiry_year"]
+        expiry_month = submission["expiry_month"]
+        cvv = submission["cvv"]
+
+        booking_info = mybot.get_user_booking_progress_info(slack_payload["user"]["id"])
+        print("BOOKING INFO", booking_info)
+        responseJSON = confirm_booking(booking_info["msg"])
+        mybot.send_confirmation_message(responseJSON, booking_info["channel"])
+        return make_response("", 200)
+
+
+def confirm_booking(original_msg):
+    responseObj = mybot.getAPIAIResponseObject(original_msg, "bot_user")
+
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(responseObj["result"]["parameters"])
+
+    intent = responseObj["result"]["metadata"]["intentName"]
+    room_type = responseObj["result"]["parameters"]["RoomType"]
+    date_period = responseObj["result"]["parameters"]["date-period"]
+    email = responseObj["result"]["parameters"]["email"]
+    if email == "":
+        email = getEmailId(original_msg)
+
+    bActionComplete = responseObj["result"]["actionIncomplete"] == False
+    
+    print(intent, room_type, date_period, bActionComplete)
+    
+    arr_available_rooms = getRoomAvailabilityByType(room_type)
+
+    if len(arr_available_rooms) == 0:
+        return mybot.show_room_not_available(room_type, date_period)
+    else:
+        dates = date_period.split("/")   
+        bookRoom(0, dates[0], dates[1], "", "", "", "", "", "", email, "", "", 0,0,"","", arr_available_rooms[0])
+        
+        return mybot.show_booking_confirmation(room_type, date_period, email)
 
 # Let's add an event handler for actions taken from message buttons
 @events_adapter.on("action")
-def action_handler(action_value, original_msg_obj):
+def action_handler(action_value, original_msg_obj, trigger_id):
     
     original_msg = original_msg_obj["text"]
     print("########### Action Handler ###########", action_value)
     
     if action_value == "confirm_booking":
+        responseJSON = json.dumps(confirm_booking(original_msg))
+        return make_response(responseJSON, 200, {'Content-Type':
+                                                    'application/json'})
         
-        responseObj = mybot.getAPIAIResponseObject(original_msg, "bot_user")
-
-        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-        print(responseObj["result"]["parameters"])
-
-        intent = responseObj["result"]["metadata"]["intentName"]
-        room_type = responseObj["result"]["parameters"]["RoomType"]
-        date_period = responseObj["result"]["parameters"]["date-period"]
-        email = getEmailId(original_msg)
-
-        bActionComplete = responseObj["result"]["actionIncomplete"] == False
-        
-        print(intent, room_type, date_period, bActionComplete)
-        
-        arr_available_rooms = getRoomAvailabilityByType(room_type)
-
-        if len(arr_available_rooms) == 0:
-            return make_response(mybot.show_room_not_available(room_type, date_period), 200, {'Content-Type':
-                                                        'application/json'})
-        else:
-            dates = date_period.split("/")   
-            bookRoom(0, dates[0], dates[1], "", "", "", "", "", "", email, "", "", 0,0,"","", arr_available_rooms[0])
-            
-            return make_response(mybot.show_booking_confirmation(room_type, date_period, email), 200, {'Content-Type':
-                                                        'application/json'})
-
-    
     if action_value == "email_confirmation" or action_value == "sms_confirmation":
         
         print("$$$$$$$$$$$$$$$$$$$ original_msg $$$$$$$$$$$$$$$$$$$$$$")
@@ -153,6 +173,12 @@ def action_handler(action_value, original_msg_obj):
                                                     'application/json'})
 
         
+    if action_value == "pay_and_confirm_booking":
+        
+        mybot.OpenPaymentDialog(trigger_id)
+
+        return make_response("", 200, {})
+
 
     return "No action handler found for %s type actions" % action_value
     pass
