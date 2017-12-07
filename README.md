@@ -22,4 +22,16 @@ Hotel booking chatbot with slack api
 6. Get hotel amenities details - like swimming pool, game room, pool table
 7. Booking cancellation
 
+## Screenshots
 
+1. Hotel Room Booking
+![Alt text](/images/image1.png?raw=true "Image 1")
+
+2. Credit Card Payment Page
+![Alt text](/images/image2.png?raw=true "Image 2")
+
+3. Email and SMS sending
+![Alt text](/images/image3.png?raw=true "Image 2")
+
+4. Booking Cancellation
+![Alt text](/images/image4.png?raw=true "Image 2")
