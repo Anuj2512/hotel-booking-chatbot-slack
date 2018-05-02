@@ -6,7 +6,7 @@ import asyncio
 def send_mail(toaddr, emailsub, emailbody):
     
     print("SENDING MAIL")
-    fromaddr = "rocket2512@gmail.com"
+    fromaddr = ""
     msg = MIMEMultipart()
     msg['From'] = "Hotel California"
     msg['To'] = toaddr
@@ -17,7 +17,7 @@ def send_mail(toaddr, emailsub, emailbody):
     #server connection and login 
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login(fromaddr, "123anuj123")
+    server.login(fromaddr, "")
 
     # concatanate whole body into a string
     text = msg.as_string() 
